@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Punchcard</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --surface: #ffffff;
+      --surface-muted: #eef0f3;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #111827;
+      --on-primary: #ffffff;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --amber: #b45309;
+      --amber-soft: #fef3c7;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+      --blue: #1d4ed8;
+      --blue-soft: #dbeafe;
+      --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
+      --radius: 16px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b0d12;
+        --surface: #151821;
+        --surface-muted: #1f2330;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --border: #2a2f3d;
+        --primary: #f3f4f6;
+        --on-primary: #111827;
+        --green: #4ade80;
+        --green-soft: #12301f;
+        --amber: #fbbf24;
+        --amber-soft: #352a0c;
+        --red: #f87171;
+        --red-soft: #3a1717;
+        --blue: #93c5fd;
+        --blue-soft: #172544;
+        --shadow: none;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 64px; }
+    svg { width: 18px; height: 18px; flex: none; }
+    [hidden] { display: none !important; }
+
+    /* header */
+
+    header {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 16px; margin-bottom: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .brand-icon {
+      display: grid; place-items: center; width: 36px; height: 36px;
+      border-radius: 10px; background: var(--primary); color: var(--on-primary);
+    }
+
+    nav { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface-muted); }
+    nav button {
+      border: 0; background: none; color: var(--muted); font: inherit; font-weight: 500;
+      padding: 8px 14px; border-radius: 9px; cursor: pointer;
+    }
+    nav button:hover { color: var(--text); }
+    nav button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+    /* building blocks */
+
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px;
+    }
+    .panel h2 { margin: 0 0 4px; font-size: 1.05rem; }
+    .panel .subtitle { margin: 0 0 20px; color: var(--muted); }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .panel-header h2 { margin: 0; }
+
+    .grid { display: grid; gap: 16px; grid-template-columns: 380px minmax(0, 1fr); align-items: start; }
+    @media (max-width: 880px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+    .stack { display: grid; gap: 16px; }
+
+    form { display: grid; gap: 14px; }
+    label { display: grid; gap: 6px; font-weight: 500; font-size: 0.9rem; }
+    label .optional { color: var(--muted); font-weight: 400; }
+    input {
+      font: inherit; color: var(--text); background: var(--surface);
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+    }
+    input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--surface-muted); }
+
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 10px; cursor: pointer;
+      border: 1px solid var(--primary); background: var(--primary); color: var(--on-primary);
+      text-decoration: none;
+    }
+    .button:hover { opacity: 0.9; }
+    .button.secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+    .button.secondary:hover { background: var(--surface-muted); opacity: 1; }
+    .button.small { padding: 6px 10px; font-size: 0.85rem; }
+
+    .alert { margin: 0; padding: 10px 14px; border-radius: 10px; background: var(--red-soft); color: var(--red); }
+    .alert:empty { display: none; }
+    #admin-error { margin-bottom: 16px; }
+
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      font-size: 0.8rem; font-weight: 600; white-space: nowrap;
+    }
+    .badge.green { background: var(--green-soft); color: var(--green); }
+    .badge.amber { background: var(--amber-soft); color: var(--amber); }
+    .badge.red { background: var(--red-soft); color: var(--red); }
+    .badge.blue { background: var(--blue-soft); color: var(--blue); }
+
+    .table-wrap { overflow-x: auto; margin: 0 -24px -24px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 16px; text-align: left; border-top: 1px solid var(--border); }
+    th:first-child, td:first-child { padding-left: 24px; }
+    th:last-child, td:last-child { padding-right: 24px; text-align: right; }
+    th, td:first-child, td:last-child { white-space: nowrap; }
+    th { font-size: 0.85rem; font-weight: 600; color: var(--muted); background: var(--surface-muted); }
+    td input { padding: 6px 8px; }
+    .row-actions { display: inline-flex; gap: 6px; }
+    .badges { display: inline-flex; gap: 6px; }
+    td.number { text-align: right; font-variant-numeric: tabular-nums; }
+    th.number { text-align: right; }
+    .empty { color: var(--muted); text-align: center; padding: 32px; }
+    .muted { color: var(--muted); }
+
+    /* clock in/out */
+
+    #clock { max-width: 560px; margin: 0 auto; }
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .choice {
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      padding: 20px; font: inherit; font-size: 1.15rem; font-weight: 600; cursor: pointer;
+      color: var(--text); background: var(--surface); border: 2px solid var(--border); border-radius: 14px;
+    }
+    .choice svg { width: 28px; height: 28px; }
+    .choice:hover { border-color: var(--muted); }
+    #in.selected { border-color: var(--green); background: var(--green-soft); color: var(--green); }
+    #out.selected { border-color: var(--amber); background: var(--amber-soft); color: var(--amber); }
+
+    #reader { margin: 16px 0; border-radius: 14px; overflow: hidden; background: #000; border: 0 !important; }
+    #reader video { display: block; }
+
+    #clock-message {
+      margin: 0; padding: 14px; border-radius: 12px; text-align: center;
+      font-size: 1.15rem; font-weight: 600; background: var(--surface-muted); color: var(--muted);
+    }
+    #clock-message.ok { background: var(--green-soft); color: var(--green); }
+    #clock-message.error { background: var(--red-soft); color: var(--red); }
+
+    /* login */
+
+    #login { max-width: 380px; margin: 48px auto 0; }
+    .lock {
+      display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 16px;
+      border-radius: 12px; background: var(--surface-muted);
+    }
+
+    /* employee card preview, also what gets printed */
+
+    .card {
+      display: flex; align-items: center; gap: 16px;
+      width: 3.375in; max-width: 100%; height: 2.125in; padding: 0.15in;
+      border: 1px solid var(--border); border-radius: 0.125in; background: #fff; color: #111827;
+    }
+    .card img { width: 1.8in; height: 1.8in; }
+    #card-name { font-size: 1.1rem; font-weight: 700; }
+    #card-eid { color: #6b7280; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+    @media print {
+      body * { visibility: hidden; }
+      .card, .card * { visibility: visible; }
+      .card { position: absolute; top: 0; left: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <span class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </span>
+        Punchcard
+      </div>
+      <nav>
+        <button data-tab="clock">Clock in/out</button>
+        <button data-tab="employees">Employees</button>
+        <button data-tab="report">Report</button>
+      </nav>
+    </header>
+
+    <p id="admin-error" class="alert"></p>
+
+    <!-- clock in/out -->
+    <section id="clock" class="panel" hidden>
+      <div class="choices">
+        <button id="in" class="choice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>
+          Clock in
+        </button>
+        <button id="out" class="choice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          Clock out
+        </button>
+      </div>
+      <div id="reader"></div>
+      <p id="clock-message"></p>
+    </section>
+
+    <!-- admin password -->
+    <section id="login" class="panel" hidden>
+      <div class="lock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      </div>
+      <h2>Admin access</h2>
+      <p class="subtitle">Enter the admin password to manage employees and see reports.</p>
+      <form id="login-form">
+        <label>Password <input id="password" type="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="alert"></p>
+        <button class="button">Unlock</button>
+      </form>
+    </section>
+
+    <!-- employees -->
+    <section id="employees" class="grid" hidden>
+      <div class="stack">
+        <div class="panel">
+          <h2>Add employee</h2>
+          <p class="subtitle">They get a card with a QR code to scan.</p>
+          <form id="add-form">
+            <label>Employee ID <input name="eid" required></label>
+            <label>Name <input name="name" required></label>
+            <label><span>Email <span class="optional">(optional)</span></span> <input name="email" type="email"></label>
+            <p id="add-error" class="alert"></p>
+            <button class="button">Add employee</button>
+          </form>
+        </div>
+
+        <div id="card" class="panel" hidden>
+          <h2>Card</h2>
+          <p class="subtitle">Print it, or save the QR code on their phone.</p>
+          <div class="card">
+            <img id="card-image" alt="Employee QR code">
+            <div>
+              <div id="card-name"></div>
+              <div id="card-eid"></div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="button" onclick="print()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/></svg>
+              Print card
+            </button>
+            <a id="card-download" class="button secondary" download>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+              Download QR
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><h2>Employees</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th></th></tr></thead>
+            <tbody id="employee-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- report -->
+    <section id="report" class="panel" hidden>
+      <div class="panel-header">
+        <h2>Shifts</h2>
+        <button id="download-csv" class="button secondary small">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          Download CSV
+        </button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>In</th><th>Out</th><th class="number">Hours</th><th>Notes</th><th></th></tr></thead>
+          <tbody id="shift-rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    // ---------- tabs ----------
+
+    let currentTab = "clock";
+
+    async function showTab(name) {
+      currentTab = name;
+      for (const button of document.querySelectorAll("nav button")) {
+        button.classList.toggle("active", button.dataset.tab === name);
+      }
+      for (const id of ["clock", "login", "employees", "report"]) {
+        $(id).hidden = true;
+      }
+      $("admin-error").textContent = "";
+
+      if (name === "clock") {
+        $("clock").hidden = false;
+        startCamera();
+        return;
+      }
+
+      await stopCamera();
+      if (!password) {
+        $("login").hidden = false;
+        $("password").focus();
+        return;
+      }
+
+      $(name).hidden = false;
+      try {
+        if (name === "employees") await loadEmployees();
+        if (name === "report") await loadReport();
+      } catch (error) {
+        showAdminError(error);
+      }
+    }
+
+    function showAdminError(error) {
+      if (!password) {
+        // The password was wrong: ask again.
+        $("login-error").textContent = error.message;
+        showTab(currentTab);
+      } else {
+        $("admin-error").textContent = error.message;
+      }
+    }
+
+    for (const button of document.querySelectorAll("nav button")) {
+      button.onclick = () => showTab(button.dataset.tab);
+    }
+
+    // ---------- admin password and API calls ----------
+
+    let password = remember("password");
+
+    function remember(key, value) {
+      // sessionStorage keeps the password until this browser tab closes.
+      try {
+        if (value === undefined) return sessionStorage.getItem(key);
+        if (value === null) sessionStorage.removeItem(key);
+        else sessionStorage.setItem(key, value);
+      } catch {
+        return null;
+      }
+    }
+
+    $("login-form").onsubmit = (event) => {
+      event.preventDefault();
+      password = $("password").value;
+      remember("password", password);
+      $("password").value = "";
+      $("login-error").textContent = "";
+      showTab(currentTab);
+    };
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        ...options,
+        headers: { "Content-Type": "application/json", "X-Admin-Password": password || "" },
+      });
+
+      if (response.status === 401) {
+        password = null;
+        remember("password", null);
+      }
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(typeof body.detail === "string" ? body.detail : "Check what you entered and try again");
+      }
+      return response;
+    }
+
+    function tableRow(cells) {
+      const tr = document.createElement("tr");
+      for (const cell of cells) {
+        const td = document.createElement("td");
+        td.append(cell ?? "");
+        tr.append(td);
+      }
+      return tr;
+    }
+
+    function emptyRow(text, columns) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = columns;
+      td.className = "empty";
+      td.textContent = text;
+      tr.append(td);
+      return tr;
+    }
+
+    function badge(text, color) {
+      const element = document.createElement("span");
+      element.textContent = text;
+      element.className = `badge ${color}`;
+      return element;
+    }
+
+    function smallButton(text, className = "button small") {
+      const element = document.createElement("button");
+      element.className = className;
+      element.textContent = text;
+      return element;
+    }
+
+    function saveFile(blob, filename) {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+
+    // ---------- clock in/out ----------
+
+    const PROMPT = "Choose clock in or clock out, then show your card.";
+    let direction = null;
+    let busy = false;
+    let scanner = null;
+
+    function choose(choice) {
+      direction = choice;
+      $("in").classList.toggle("selected", choice === "in");
+      $("out").classList.toggle("selected", choice === "out");
+      if (choice) showClockMessage(`Show your card to clock ${choice}.`);
+    }
+
+    $("in").onclick = () => choose("in");
+    $("out").onclick = () => choose("out");
+
+    function showClockMessage(text, className = "") {
+      $("clock-message").textContent = text;
+      $("clock-message").className = className;
+    }
+
+    async function onScan(token) {
+      if (busy) return;
+      if (!direction) {
+        showClockMessage("Choose clock in or clock out first.", "error");
+        return;
+      }
+
+      busy = true;
+      try {
+        const response = await fetch("/api/punch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, direction }),
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showClockMessage(`${result.name} clocked ${result.direction}.`, "ok");
+        } else {
+          showClockMessage(typeof result.detail === "string" ? result.detail : "That didn't work. Try again.", "error");
+        }
+      } catch {
+        showClockMessage("Can't reach the server. Try again.", "error");
+      }
+
+      // The next person starts fresh, and the same card can't punch twice in a row.
+      choose(null);
+      setTimeout(() => {
+        busy = false;
+        showClockMessage(PROMPT);
+      }, 3000);
+    }
+
+    async function startCamera() {
+      showClockMessage(PROMPT);
+      if (scanner) return;
+      scanner = new Html5Qrcode("reader");
+      try {
+        // "user" is the front camera, so people can see the screen while they scan.
+        await scanner.start({ facingMode: "user" }, { fps: 10, qrbox: 250 }, onScan);
+      } catch {
+        scanner = null;
+        showClockMessage("Camera not available. Open this page over https and allow the camera.", "error");
+      }
+    }
+
+    async function stopCamera() {
+      if (!scanner) return;
+      try {
+        await scanner.stop();
+        scanner.clear();
+      } catch {
+        // The camera never started, so there's nothing to stop.
+      }
+      scanner = null;
+    }
+
+    // ---------- employees ----------
+
+    async function loadEmployees() {
+      const employees = await (await api("/api/employees")).json();
+      const rows = employees.map((employee) => {
+        const cardButton = smallButton("Card", "button secondary small");
+        cardButton.onclick = () => showCard(employee).catch(showAdminError);
+        return tableRow([employee.eid, employee.name, employee.email, cardButton]);
+      });
+      if (rows.length === 0) rows.push(emptyRow("No employees yet.", 4));
+      $("employee-rows").replaceChildren(...rows);
+    }
+
+    $("add-form").onsubmit = async (event) => {
+      event.preventDefault();
+      const form = event.target;
+      $("add-error").textContent = "";
+      try {
+        const response = await api("/api/employees", {
+          method: "POST",
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        });
+        const employee = await response.json();
+        form.reset();
+        loadEmployees();
+        showCard(employee);
+      } catch (error) {
+        $("add-error").textContent = error.message;
+      }
+    };
+
+    async function showCard(employee) {
+      const image = await (await api(`/api/employees/${encodeURIComponent(employee.eid)}/card.png`)).blob();
+      const url = URL.createObjectURL(image);
+      $("card-image").src = url;
+      $("card-download").href = url;
+      $("card-download").download = `${employee.eid}-card.png`;
+      $("card-name").textContent = employee.name;
+      $("card-eid").textContent = `ID ${employee.eid}`;
+      $("card").hidden = false;
+    }
+
+    // ---------- report ----------
+
+    async function loadReport() {
+      const shifts = await (await api("/api/report")).json();
+      const rows = shifts.map((shift) => {
+        let clockOut = shift.clock_out;
+        if (!clockOut && shift.missing_clock_out) clockOut = badge("Missing clock-out", "red");
+        if (!clockOut) clockOut = badge("Working", "blue");
+
+        const notes = document.createElement("span");
+        notes.className = "badges";
+        if (shift.flagged) {
+          const flagged = badge("Flagged", "amber");
+          flagged.title = "Punched from outside the shop network";
+          notes.append(flagged);
+        }
+        if (shift.edited) notes.append(badge("Edited", "blue"));
+
+        const editButton = smallButton("Edit", "button secondary small");
+        const row = tableRow([shift.name, shift.clock_in, clockOut, shift.hours?.toFixed(2), notes, editButton]);
+        row.children[3].className = "number";
+        editButton.onclick = () => editShift(shift, row);
+        return row;
+      });
+      if (rows.length === 0) rows.push(emptyRow("No shifts yet.", 6));
+      $("shift-rows").replaceChildren(...rows);
+    }
+
+    // Swap a report row's times for inputs, then save or cancel.
+    function editShift(shift, row) {
+      const clockIn = document.createElement("input");
+      clockIn.type = "datetime-local";
+      clockIn.value = shift.clock_in_input;
+
+      const clockOut = document.createElement("input");
+      clockOut.type = "datetime-local";
+      clockOut.value = shift.clock_out_input;
+
+      const save = smallButton("Save");
+      const cancel = smallButton("Cancel", "button secondary small");
+      const actions = document.createElement("span");
+      actions.className = "row-actions";
+      actions.append(cancel, save);
+
+      row.children[1].replaceChildren(clockIn);
+      row.children[2].replaceChildren(clockOut);
+      row.children[5].replaceChildren(actions);
+      clockIn.focus();
+
+      cancel.onclick = () => loadReport().catch(showAdminError);
+      save.onclick = async () => {
+        $("admin-error").textContent = "";
+        try {
+          await api(`/api/shifts/${shift.id}`, {
+            method: "PUT",
+            body: JSON.stringify({ clock_in: clockIn.value, clock_out: clockOut.value || null }),
+          });
+          await loadReport();
+        } catch (error) {
+          showAdminError(error);
+        }
+      };
+    }
+
+    $("download-csv").onclick = async () => {
+      try {
+        saveFile(await (await api("/api/report.csv")).blob(), "punchcard.csv");
+      } catch (error) {
+        showAdminError(error);
+      }
+    };
+
+    showTab("clock");
+  </script>
+</body>
+</html>
